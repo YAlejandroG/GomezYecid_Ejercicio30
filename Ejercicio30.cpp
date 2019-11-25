@@ -10,6 +10,7 @@ double Xmax = 1;
 
 double **FTCS(int Nx);
 double **dPSI(double **PSI,int Nx);
+int convergence(double **PSI,double **dPSI,int Nx);
 
 int main(){
     
@@ -66,9 +67,39 @@ double **dPSI(double **PSI,int Nx){
     
     for(int i=1; i<=Nt; i++){
         for(int j=0; j<Nx; j++){
-            dPSI[i][j] = PSI[i][j]-PSI[i-1][j];
+            dPSI[i][j] = abs(PSI[i][j]-PSI[i-1][j]);
         }
     }
     
     return dPSI;
+}
+
+int convergence(double **PSI,double **dPSI,int Nx){
+    
+    int i = 1;
+    double Pmax = PSI[1][0];
+    double dPmax = dPSI[1][0];
+    
+    for(int j=1;j<=Nx;j++){
+        if(PSI[1][j]>Pmax){
+            Pmax = PSI[1][j];
+        }
+        if(dPSI[1][j]>dPmax){
+            dPmax = dPSI[1][j];
+        }
+    }
+    
+    while(dPmax/Pmax>pow(10,-5)){
+        i++;
+        for(int j=1;j<=Nx;j++){
+            if(PSI[i][j]>Pmax){
+                Pmax = PSI[i][j];
+            }
+            if(dPSI[i][j]>dPmax){
+                dPmax = dPSI[i][j];
+            }
+        }    
+    }
+    
+    return i;
 }
