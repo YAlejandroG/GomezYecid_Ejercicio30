@@ -5,30 +5,28 @@ using namespace std;
 
 double D = 1;
 double S = 1;
-double T = 1;
 double Xmin = -1;
 double Xmax = 1;
-int Nt = 450;
-int Nx = 30;
 
-int FTCS(int Nt,int Nx,string nombre);
+double **FTCS(int Nx);
+double **dPSI(double **PSI,int Nx);
 
 int main(){
-    string nombre = "difusion.dat";
-    FTCS(Nt,Nx,nombre);
+    
+    int Nx = 30;
     
     return 0;
 }
 
-int FTCS(int Nt,int Nx,string nombre){
+double **FTCS(int Nx){
+    
+    double dX = (Xmax-Xmin)/Nx;
+    int Nt = 2*D/pow(dX,2);
     
     double **PSI = new double *[Nt+1];
     for (int i=0;i<=Nt;i++){
         PSI[i] =new double[Nx+1];
     }
-    
-    double dT = T/Nt;
-    double dX = (Xmax-Xmin)/Nx;
     
     for(int i=0; i<=Nt; i++){
         for(int j=0; j<=Nx; j++){
@@ -44,31 +42,33 @@ int FTCS(int Nt,int Nx,string nombre){
     
     for(int i=0; i<Nt; i++){
         for(int j=1; j<Nx; j++){
-            PSI[i+1][j] = PSI[i][j]+D*dT*(PSI[i][j+1]-2*PSI[i][j]+PSI[i][j-1])/pow(dX,2)+dT*S;
+            PSI[i+1][j] = (PSI[i][j+1]+PSI[i][j-1])/2+S/Nt;
         }
     }
     
-    ofstream outfile;
-    outfile.open(nombre);
+    return PSI;
+}
+
+double **dPSI(double **PSI,int Nx){
     
-    double time = 0;
+    double dX = (Xmax-Xmin)/Nx;
+    int Nt = 2*D/pow(dX,2);
     
-    for(int i=0; i<=Nt; i++){
-        outfile<<time<<"\t";
-        time += dT;
-        for(int j=0; j<=Nx; j++){
-            outfile<<PSI[i][j]<<"\t";
+    double **dPSI = new double *[Nt+1];
+    for (int i=0;i<=Nt;i++){
+        dPSI[i] =new double[Nx+1];
+    }
+    
+    for(int j=0; j<=Nx; j++){    
+        dPSI[0][j] = 0;
+    }
+    
+    
+    for(int i=1; i<=Nt; i++){
+        for(int j=0; j<Nx; j++){
+            dPSI[i][j] = PSI[i][j]-PSI[i-1][j];
         }
-        outfile<<endl;
     }
     
-    double x = -1;
-    outfile<<0<<"\t";
-    for(int j=0; j<=Nx; j++){
-        outfile<<x<<"\t";
-        x += dX;
-    }
-    outfile.close();
-    
-    return 0;
+    return dPSI;
 }
