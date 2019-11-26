@@ -8,22 +8,34 @@ double S = 1;
 double Xmin = -1;
 double Xmax = 1;
 
-double **FTCS(int Nx);
-double **dPSI(double **PSI,int Nx);
-int convergence(double **PSI,double **dPSI,int Nx);
+double **FTCS(int Nx,int Nt);
+double **DPSI(double **PSI,int Nx,int Nt);
+string convergence(int Nx,int Nt);
 
 int main(){
     
-    int Nx = 30;
+    ofstream outfile;
+    outfile.open("resultado.dat");
+    
+    int Nx = 10;
+    int Nt;
+    double dX;
+    
+    for(int i=0;i<8;i++){
+        dX = (Xmax-Xmin)/Nx;
+        Nt = 10*2*D/pow(dX,2);
+        
+        outfile<<convergence(Nx,Nt)<<endl;
+        
+        Nx += 10;
+    }
+    outfile.close();
     
     return 0;
 }
 
-double **FTCS(int Nx){
-    
+double **FTCS(int Nx,int Nt){
     double dX = (Xmax-Xmin)/Nx;
-    int Nt = 2*D/pow(dX,2);
-    
     double **PSI = new double *[Nt+1];
     for (int i=0;i<=Nt;i++){
         PSI[i] =new double[Nx+1];
@@ -43,17 +55,14 @@ double **FTCS(int Nx){
     
     for(int i=0; i<Nt; i++){
         for(int j=1; j<Nx; j++){
-            PSI[i+1][j] = (PSI[i][j+1]+PSI[i][j-1])/2+S/Nt;
+            PSI[i+1][j] = (PSI[i][j+1]+PSI[i][j-1])/2+S/(2*D/pow(dX,2));
         }
     }
     
     return PSI;
 }
 
-double **dPSI(double **PSI,int Nx){
-    
-    double dX = (Xmax-Xmin)/Nx;
-    int Nt = 2*D/pow(dX,2);
+double **DPSI(double **PSI,int Nx,int Nt){
     
     double **dPSI = new double *[Nt+1];
     for (int i=0;i<=Nt;i++){
@@ -66,7 +75,7 @@ double **dPSI(double **PSI,int Nx){
     
     
     for(int i=1; i<=Nt; i++){
-        for(int j=0; j<Nx; j++){
+        for(int j=0; j<=Nx; j++){
             dPSI[i][j] = abs(PSI[i][j]-PSI[i-1][j]);
         }
     }
@@ -74,7 +83,19 @@ double **dPSI(double **PSI,int Nx){
     return dPSI;
 }
 
-int convergence(double **PSI,double **dPSI,int Nx){
+string convergence(int Nx,int Nt){
+    
+    double **PSI = new double *[Nt+1];
+    for (int i=0;i<=Nt;i++){
+        PSI[i] =new double[Nx+1];
+    }
+    PSI = FTCS(Nx,Nt);
+    
+    double **dPSI = new double *[Nt+1];
+    for (int i=0;i<=Nt;i++){
+        dPSI[i] =new double[Nx+1];
+    }
+    dPSI = DPSI(PSI,Nx,Nt);
     
     int i = 1;
     double Pmax = PSI[1][0];
@@ -89,7 +110,7 @@ int convergence(double **PSI,double **dPSI,int Nx){
         }
     }
     
-    while(dPmax/Pmax>pow(10,-5)){
+    while(dPmax/Pmax>pow(10,-6)){
         i++;
         for(int j=1;j<=Nx;j++){
             if(PSI[i][j]>Pmax){
@@ -100,6 +121,9 @@ int convergence(double **PSI,double **dPSI,int Nx){
             }
         }    
     }
+    int centro = Nx/2;
+        
+    double error = (PSI[Nt][centro]-PSI[i][centro])/PSI[Nt][centro];
     
-    return i;
+    return to_string(Nx)+" "+to_string(i)+" "+to_string(error)+" "+to_string(dPmax/Pmax);
 }
